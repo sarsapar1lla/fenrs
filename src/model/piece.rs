@@ -36,7 +36,7 @@ impl Piece {
         &self.piece_type
     }
 
-    fn unicode(&self) -> String {
+    pub fn unicode(&self) -> String {
         match (self.colour, self.piece_type) {
             // Black pieces
             (PieceColour::Black, PieceType::Pawn) => "♟",
