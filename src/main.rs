@@ -4,8 +4,7 @@ use fenrs::{execute_moves, launch, parse, Game};
 use std::fs;
 
 fn main() {
-    let file =
-        fs::read_to_string("./resources/test/acceptance/Candidates2022.pgn").unwrap();
+    let file = fs::read_to_string("./resources/test/acceptance/Candidates2022.pgn").unwrap();
     let pgns = parse(&file).unwrap();
 
     let games: Vec<Game> = pgns
