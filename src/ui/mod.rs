@@ -1,13 +1,18 @@
 use eframe::egui;
-use egui::{Key, Pos2};
+use egui::{Key, Vec2};
 
 mod board;
-mod ply_list;
+mod games;
+mod ply;
 
-use crate::model::{Game, PieceColour, Position, MAX_POSITION};
+use crate::model::{Game, PieceColour};
 
 pub fn launch(games: Vec<Game>) -> Result<(), eframe::Error> {
-    let options = eframe::NativeOptions::default();
+    let options = eframe::NativeOptions {
+        initial_window_size: Some(Vec2::new(900.0, 700.0)),
+        centered: true,
+        ..Default::default()
+    };
     eframe::run_native("FEN-rs", options, Box::new(|_cc| Box::new(App::new(games))))
 }
 
@@ -31,24 +36,34 @@ impl App {
 }
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let ply_painter = ply::Painter::new(6, 14.0);
+        let game_painter = games::Painter::new(14.0);
+        let current_game = &self.games[self.current_game];
+        let current_board = &current_game.boards()[self.current_ply[self.current_game]];
+
+        let bottom_panel_height = (frame.info().window_info.size.y * 0.66).min(200.0);
+
+        egui::TopBottomPanel::bottom("bottom_panel")
+            .exact_height(bottom_panel_height)
+            .show(ctx, |ui| {
+                ui.horizontal_top(|ui| {
+                    game_painter.list(ui, &self.games, self.current_game);
+                    ui.separator();
+                    ui.label("Some placeholder metadata");
+                })
+            });
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            let board_origin = Pos2::new(40.0, 40.0);
-            let square_size = (ui.available_height() - 40.0).min(ui.available_width() - 40.0) / 8.0;
-
-            // let ply_painter = ply_list::Painter::new(ply_origin, )
-            let board_painter = board::Painter::new(board_origin, square_size);
-            let current_game = &self.games[self.current_game];
-            let current_board = &current_game.boards()[self.current_ply[self.current_game]];
-
-            let current_ply_text = if self.current_ply[self.current_game] > 0 {
-                current_game.pgn().ply()[self.current_ply[self.current_game] - 1].to_string()
-            } else {
-                String::new()
-            };
-            ui.label(format!("Current ply: {current_ply_text}"));
-
-            board_painter.board(ui.painter(), current_board, self.perspective);
+            ui.horizontal_top(|ui| {
+                ply_painter.list(
+                    ui,
+                    current_game.pgn().ply(),
+                    self.current_ply[self.current_game],
+                );
+                ui.separator();
+                ui.add(board::Painter::new(current_board, self.perspective));
+            });
 
             // Cycle through games
             if ctx.input(|i| i.key_pressed(Key::W)) && self.current_game > 0 {
@@ -87,6 +102,11 @@ impl eframe::App for App {
                     PieceColour::Black => PieceColour::White,
                 };
                 self.perspective = new_perspective;
+            }
+
+            // Quit
+            if ctx.input(|i| i.key_pressed(Key::Q)) {
+                frame.close();
             }
         });
     }

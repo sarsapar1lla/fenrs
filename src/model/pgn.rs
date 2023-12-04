@@ -2,7 +2,29 @@ use std::collections::HashMap;
 
 use super::{board::Board, PieceColour, Ply};
 
-pub type Tags = HashMap<String, String>;
+#[derive(Debug, PartialEq, Eq)]
+pub struct Tags(HashMap<String, String>);
+
+impl Tags {
+    pub fn new(inner: HashMap<String, String>) -> Self {
+        Tags(inner)
+    }
+
+    pub fn remove(&mut self, key: &str) -> Option<String> {
+        self.0.remove(key)
+    }
+
+    pub fn get(&self, key: &str) -> Option<String> {
+        self.0.get(key).map(ToString::to_string)
+    }
+
+    pub fn get_or_default(&self, key: &str, default: &str) -> String {
+        self.0
+            .get(key)
+            .map(ToString::to_string)
+            .unwrap_or(default.to_string())
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GameResult {

@@ -1,4 +1,4 @@
-use egui::{Pos2, Label, Color32, Align2, FontId, Rect};
+use egui::{Color32, FontId, Grid, RichText, ScrollArea};
 
 use crate::model::{
     Check, MoveQualifier, Movement, Piece, PieceColour, PieceType, Ply, PlyMovement, Position,
@@ -6,43 +6,55 @@ use crate::model::{
 };
 
 pub struct Painter {
-    origin: Pos2,
-    width: f32,
-    height: f32,
-    columns: i8,
+    columns: usize,
     font_size: f32,
     highlight_colour: Color32,
 }
 
 impl Painter {
-    pub fn new(origin: Pos2, width: f32, height: f32, columns: i8) -> Self {
-        Painter { origin, width: width / f32::from(columns), height, columns, font_size: 12.0, highlight_colour: Color32::GOLD }
-    }
-
-    pub fn ply_list(&self, ui: &mut egui::Ui, ply_list: &[Ply], current_ply: i8) {
-        let mut row = 0;
-        let mut col = 0;
-
-        for (idx, ply) in ply_list.iter().enumerate() {
-            self.ply(ui, row, col, ply, idx == current_ply as usize);
-            col += 1;
-            if col == self.columns {
-                row += 1;
-                col = 0;
-            }
+    pub fn new(columns: usize, font_size: f32) -> Self {
+        Painter {
+            columns,
+            font_size,
+            highlight_colour: Color32::GOLD,
         }
     }
 
-    fn ply(&self, ui: &mut egui::Ui, row: i8, col: i8, ply: &Ply, highlight: bool) {
-        let font_id = FontId::new(self.font_size, egui::FontFamily::Proportional);
-        let text_colour = if highlight { self.highlight_colour } else { Color32::WHITE };
-
-        let widget = Label::new(ply.to_string());
-        let min = Pos2::new(self.origin.x + (self.width * f32::from(col)), self.origin.y + (self.height * f32::from(row)));
-        let max = Pos2::new(self.origin.x + (self.width * f32::from(col)) + self.width, self.origin.y + (self.height * f32::from(row)) + self.height);
-        let max_rect = Rect::from_min_max(min, max);
-
-        ui.put(max_rect, widget);
+    pub fn list(&self, ui: &mut egui::Ui, ply_list: &[Ply], current_ply: usize) {
+        let height = ui.available_height();
+        let width = ui.available_width() / 2.0;
+        ScrollArea::vertical()
+            .min_scrolled_height(height)
+            .max_height(height)
+            .min_scrolled_width(width)
+            .max_width(width)
+            .show(ui, |ui| {
+                Grid::new("ply_list_grid")
+                    .num_columns(self.columns)
+                    .striped(true)
+                    .show(ui, |ui| {
+                        for chunk in ply_list.chunks(self.columns) {
+                            for ply in chunk {
+                                let text_colour = if ply_list.iter().position(|p| p == ply).unwrap()
+                                    == current_ply
+                                {
+                                    self.highlight_colour
+                                } else {
+                                    Color32::WHITE
+                                };
+                                ui.label(
+                                    RichText::new(ply.to_string())
+                                        .font(FontId::new(
+                                            self.font_size,
+                                            egui::FontFamily::Proportional,
+                                        ))
+                                        .color(text_colour),
+                                );
+                            }
+                            ui.end_row();
+                        }
+                    });
+            });
     }
 }
 
@@ -109,7 +121,14 @@ impl ToString for Ply {
                 qualifier,
                 check,
                 capture,
-            } => format_move(self.move_number(), movement, qualifier.as_ref(), check.as_ref(), *capture, None),
+            } => format_move(
+                self.move_number(),
+                movement,
+                qualifier.as_ref(),
+                check.as_ref(),
+                *capture,
+                None,
+            ),
             PlyMovement::Promotion {
                 movement,
                 promotes_to,
@@ -164,7 +183,7 @@ fn format_move(
 
 fn move_number_string(colour: PieceColour, move_number: i16) -> String {
     match colour {
-        PieceColour::White => format!("{}.", move_number),
-        PieceColour::Black => format!("{}...", move_number),
+        PieceColour::White => format!("{move_number}."),
+        PieceColour::Black => String::new(),
     }
 }
