@@ -1,18 +1,19 @@
 use crate::model::AvailableCastle;
 use crate::model::{
-    Board, Fen, Piece, PieceColour, PieceType, Position, MAX_POSITION, MIN_POSITION,
+    Board, Fen, MAX_POSITION, MIN_POSITION, Piece, PieceColour, PieceType, Position,
 };
+use nom::Parser;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{i8, u8};
 use nom::combinator::all_consuming;
 use nom::multi::many0;
 use nom::{
+    IResult,
     character::complete::one_of,
     combinator::{map, map_res},
     multi::fold_many0,
-    sequence::{terminated, tuple},
-    IResult,
+    sequence::terminated,
 };
 
 use super::error::PgnParseError;
@@ -26,20 +27,21 @@ enum FenCharacter {
 }
 
 pub fn parse(input: &str) -> IResult<&str, Fen> {
-    let parser = all_consuming(tuple((
+    let parser = all_consuming((
         fen_characters,
         active_colour,
         available_castles,
         en_passant_square,
         halfmove_clock,
         fullmove_number,
-    )));
+    ));
     map_res(parser, |elements| {
         let starting_board = board_from(
             elements.0, elements.1, elements.2, elements.3, elements.4, elements.5,
         )?;
         Ok::<Fen, PgnParseError>(Fen::new(starting_board, elements.1, elements.5))
-    })(input)
+    })
+    .parse(input)
 }
 
 fn board_from(
@@ -88,11 +90,11 @@ fn board_from(
 fn fen_characters(input: &str) -> IResult<&str, Vec<FenCharacter>> {
     let parser = alt((new_row, empty_spaces, piece));
 
-    terminated(many0(parser), tag(" "))(input)
+    terminated(many0(parser), tag(" ")).parse(input)
 }
 
 fn new_row(input: &str) -> IResult<&str, FenCharacter> {
-    map(tag("/"), |_| FenCharacter::NewRow)(input)
+    map(tag("/"), |_| FenCharacter::NewRow).parse(input)
 }
 
 fn empty_spaces(input: &str) -> IResult<&str, FenCharacter> {
@@ -101,7 +103,8 @@ fn empty_spaces(input: &str) -> IResult<&str, FenCharacter> {
         _ => Err(PgnParseError::new(format!(
             "'{i}' is not a valid empty space"
         ))),
-    })(input)
+    })
+    .parse(input)
 }
 
 fn piece(input: &str) -> IResult<&str, FenCharacter> {
@@ -124,7 +127,8 @@ fn piece(input: &str) -> IResult<&str, FenCharacter> {
         .map(|capture: (PieceColour, PieceType)| {
             FenCharacter::Piece(Piece::new(capture.0, capture.1))
         })
-    })(input)
+    })
+    .parse(input)
 }
 
 fn active_colour(input: &str) -> IResult<&str, PieceColour> {
@@ -134,7 +138,8 @@ fn active_colour(input: &str) -> IResult<&str, PieceColour> {
         _ => Err(PgnParseError::new(format!(
             "'{c}' is not a valid active colour"
         ))),
-    })(input)
+    })
+    .parse(input)
 }
 
 fn available_castles(input: &str) -> IResult<&str, Vec<AvailableCastle>> {
@@ -147,7 +152,7 @@ fn available_castles(input: &str) -> IResult<&str, Vec<AvailableCastle>> {
             acc
         },
     );
-    terminated(alt((none_parser, some_parser)), tag(" "))(input)
+    terminated(alt((none_parser, some_parser)), tag(" ")).parse(input)
 }
 
 fn available_castle(input: &str) -> IResult<&str, AvailableCastle> {
@@ -159,23 +164,24 @@ fn available_castle(input: &str) -> IResult<&str, AvailableCastle> {
         _ => Err(PgnParseError::new(format!(
             "'{c}' is not a valid available castle"
         ))),
-    })(input)
+    })
+    .parse(input)
 }
 
 fn en_passant_square(input: &str) -> IResult<&str, Option<Position>> {
     let none_parser = map(tag("-"), |_| None);
     let some_parser = map(position::parse, Option::Some);
 
-    terminated(alt((none_parser, some_parser)), tag(" "))(input)
+    terminated(alt((none_parser, some_parser)), tag(" ")).parse(input)
 }
 
 fn halfmove_clock(input: &str) -> IResult<&str, usize> {
     let parser = map(u8, usize::from);
-    terminated(parser, tag(" "))(input)
+    terminated(parser, tag(" ")).parse(input)
 }
 
 fn fullmove_number(input: &str) -> IResult<&str, usize> {
-    map(u8, usize::from)(input)
+    map(u8, usize::from).parse(input)
 }
 
 #[cfg(test)]

@@ -2,7 +2,7 @@ use nom::error::ParseError;
 use nom::error::{Error, ErrorKind};
 use nom::multi::many0;
 use nom::sequence::{pair, terminated};
-use nom::IResult;
+use nom::{IResult, Parser};
 use nom::{character::complete::line_ending, combinator::all_consuming};
 
 use super::fen;
@@ -16,7 +16,7 @@ static DEFAULT_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
 // TODO: consider how to improve error handling here
 pub fn parse(input: &str) -> IResult<&str, Pgn> {
     let (remaining, (mut tags, ply)) =
-        terminated(pair(tag::parse, movement::parse), many0(line_ending))(input)?;
+        terminated(pair(tag::parse, movement::parse), many0(line_ending)).parse(input)?;
 
     let fen = &tags
         .remove("FEN")
@@ -29,7 +29,8 @@ pub fn parse(input: &str) -> IResult<&str, Pgn> {
         .remove("Result")
         .ok_or_else(|| nom::Err::Error(Error::from_error_kind(input, ErrorKind::Tag)))?;
 
-    let (_, result) = all_consuming(result::parse)(result)
+    let (_, result) = all_consuming(result::parse)
+        .parse(result)
         .map_err(|_| nom::Err::Error(Error::from_error_kind(input, ErrorKind::Tag)))?;
 
     Ok((remaining, Pgn::new(tags, fen, result, ply)))

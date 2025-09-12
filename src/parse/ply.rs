@@ -1,10 +1,10 @@
 use nom::{
+    IResult, Parser,
     branch::alt,
     bytes::complete::tag,
     character::complete::{line_ending, one_of, space1},
     combinator::{map, map_res, opt},
-    sequence::{pair, terminated, tuple},
-    IResult,
+    sequence::{pair, terminated},
 };
 
 use crate::model::{Check, MoveQualifier, Movement, Piece, PieceColour};
@@ -25,14 +25,15 @@ fn piece_move(input: &str, colour: PieceColour) -> IResult<&str, PlyMovement> {
         remainder,
         (maybe_piece_type, (maybe_move_qualifier, is_capture, position), maybe_promotion, check),
     ) = terminated(
-        tuple((
+        (
             opt(piece_type),
             position_with_qualifier,
             opt(promotion),
             opt(check),
-        )),
+        ),
         ply_terminator,
-    )(input)?;
+    )
+    .parse(input)?;
 
     let piece = Piece::new(colour, maybe_piece_type.unwrap_or(PieceType::Pawn));
 
@@ -64,18 +65,19 @@ fn piece_move(input: &str, colour: PieceColour) -> IResult<&str, PlyMovement> {
 fn position_with_qualifier(input: &str) -> IResult<&str, (Option<MoveQualifier>, bool, Position)> {
     alt((
         map(
-            tuple((opt(move_qualifier), opt(tag("x")), position::parse)),
+            (opt(move_qualifier), opt(tag("x")), position::parse),
             |captures| (captures.0, captures.1.is_some(), captures.2),
         ),
         map(position::parse, |p: Position| {
             (None as Option<MoveQualifier>, false, p)
         }),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 fn promotion(input: &str) -> IResult<&str, PieceType> {
     let parser = pair(tag("="), piece_type);
-    map(parser, |matches| matches.1)(input)
+    map(parser, |matches| matches.1).parse(input)
 }
 
 fn move_qualifier(input: &str) -> IResult<&str, MoveQualifier> {
@@ -93,7 +95,8 @@ fn move_qualifier(input: &str) -> IResult<&str, MoveQualifier> {
                 })?,
             )),
         }
-    })(input)
+    })
+    .parse(input)
 }
 
 fn kingside_castle(input: &str, colour: PieceColour) -> IResult<&str, PlyMovement> {
@@ -102,7 +105,8 @@ fn kingside_castle(input: &str, colour: PieceColour) -> IResult<&str, PlyMovemen
     map(parser, |elements| PlyMovement::KingsideCastle {
         colour,
         check: elements.1,
-    })(input)
+    })
+    .parse(input)
 }
 
 fn queenside_castle(input: &str, colour: PieceColour) -> IResult<&str, PlyMovement> {
@@ -111,7 +115,8 @@ fn queenside_castle(input: &str, colour: PieceColour) -> IResult<&str, PlyMoveme
     map(parser, |elements| PlyMovement::QueensideCastle {
         colour,
         check: elements.1,
-    })(input)
+    })
+    .parse(input)
 }
 
 fn piece_type(input: &str) -> IResult<&str, PieceType> {
@@ -122,11 +127,12 @@ fn piece_type(input: &str) -> IResult<&str, PieceType> {
         'Q' => Ok(PieceType::Queen),
         'K' => Ok(PieceType::King),
         _ => Err(format!("Invalid piece type '{c}'")),
-    })(input)
+    })
+    .parse(input)
 }
 
 fn ply_terminator(input: &str) -> IResult<&str, &str> {
-    alt((space1, line_ending))(input)
+    alt((space1, line_ending)).parse(input)
 }
 
 fn check(input: &str) -> IResult<&str, Check> {
@@ -134,7 +140,8 @@ fn check(input: &str) -> IResult<&str, Check> {
         '+' => Ok(Check::Check),
         '#' => Ok(Check::Checkmate),
         _ => Err(PgnParseError::new(format!("'{c}' is not a valid check"))),
-    })(input)
+    })
+    .parse(input)
 }
 
 #[cfg(test)]

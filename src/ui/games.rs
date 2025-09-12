@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::Rect,
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Span},
     widgets::{Block, Borders, HighlightSpacing, List, ListItem, ListState},
-    Frame,
 };
 
 use crate::Game;
@@ -33,7 +33,7 @@ pub fn render(
     frame.render_stateful_widget(list, area, list_state);
 }
 
-fn game_description(game: &Game) -> Vec<Span> {
+fn game_description(game: &Game) -> Vec<Span<'_>> {
     let tags = game.pgn().tags();
 
     let white_player = tags.get_or_default("White", "Unknown");

@@ -1,6 +1,6 @@
-use nom::{character::complete::one_of, combinator::map_res, sequence::pair, IResult};
+use nom::{IResult, Parser, character::complete::one_of, combinator::map_res, sequence::pair};
 
-use crate::model::{Position, COLUMNS, ROWS};
+use crate::model::{COLUMNS, Position, ROWS};
 
 use super::error::PgnParseError;
 
@@ -9,7 +9,8 @@ pub fn parse(input: &str) -> IResult<&str, Position> {
     map_res(parser, |position| {
         Position::try_from(position.1, position.0)
             .map_err(|e| PgnParseError::new(format!("Failed to parse position: {e}")))
-    })(input)
+    })
+    .parse(input)
 }
 
 pub fn column(input: &str) -> IResult<&str, i8> {
@@ -19,7 +20,8 @@ pub fn column(input: &str) -> IResult<&str, i8> {
             .map(|i| i8::try_from(i).map_err(|e| PgnParseError::new(e.to_string())))
             .transpose()?
             .ok_or_else(|| PgnParseError::new(format!("'{c}' is not a valid column")))
-    })(input)
+    })
+    .parse(input)
 }
 
 pub fn row(input: &str) -> IResult<&str, i8> {
@@ -28,7 +30,8 @@ pub fn row(input: &str) -> IResult<&str, i8> {
             .map(|i| i8::try_from(i).map_err(|e| PgnParseError::new(e.to_string())))
             .transpose()?
             .ok_or_else(|| PgnParseError::new(format!("'{c}' is not a valid row")))
-    })(input)
+    })
+    .parse(input)
 }
 
 #[cfg(test)]

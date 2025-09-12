@@ -1,12 +1,12 @@
 use ratatui::{
+    Frame,
     layout::{Alignment, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Padding, Paragraph},
-    Frame,
 };
 
-use crate::model::{Board, PieceColour, Position, MAX_POSITION};
+use crate::model::{Board, MAX_POSITION, PieceColour, Position};
 
 pub fn render(frame: &mut Frame, board: &Board, perspective: PieceColour, area: Rect) {
     let positions = |i: i8| {
@@ -38,7 +38,7 @@ pub fn render(frame: &mut Frame, board: &Board, perspective: PieceColour, area: 
     frame.render_widget(paragraph, area);
 }
 
-fn square(position: Position, board: &Board) -> Span {
+fn square(position: Position, board: &Board) -> Span<'_> {
     let maybe_piece = board.occupant(position);
     let text = maybe_piece.map_or("   ".to_string(), |piece| format!(" {piece} "));
 

@@ -1,10 +1,10 @@
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
+    Frame,
     layout::Rect,
     style::{Color, Style},
     text::Span,
-    widgets::{block::Title, Block, Borders},
-    Frame,
+    widgets::{Block, Borders, block::Title},
 };
 
 use super::error::UiError;
@@ -76,7 +76,7 @@ pub fn render(frame: &mut Frame, area: Rect) {
     frame.render_widget(commands, area);
 }
 
-fn command(label: &str, background_colour: Color) -> [Span; 2] {
+fn command(label: &str, background_colour: Color) -> [Span<'_>; 2] {
     [
         Span::styled(
             label,
