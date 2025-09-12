@@ -4,7 +4,7 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::block::Title;
-use ratatui::{prelude::CrosstermBackend, Frame, Terminal};
+use ratatui::{Frame, Terminal, prelude::CrosstermBackend};
 
 use crate::model::{Board, Game, PieceColour};
 
@@ -13,7 +13,7 @@ use super::{command::Command, error::UiError};
 use super::{board, centre, command, fen, games, ply, tags};
 use crossterm::{
     execute,
-    terminal::{disable_raw_mode, LeaveAlternateScreen},
+    terminal::{LeaveAlternateScreen, disable_raw_mode},
 };
 use ratatui::widgets::{Block, Borders, Clear, ListState, Padding, Paragraph};
 

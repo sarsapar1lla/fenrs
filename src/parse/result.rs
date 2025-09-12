@@ -1,4 +1,4 @@
-use nom::{branch::alt, bytes::complete::tag, combinator::map_res, IResult};
+use nom::{IResult, Parser, branch::alt, bytes::complete::tag, combinator::map_res};
 
 use crate::model::GameResult;
 
@@ -14,7 +14,8 @@ pub fn parse(input: &str) -> IResult<&str, GameResult> {
         _ => Err(PgnParseError::new(format!(
             "'{result}' is not a valid game result"
         ))),
-    })(input)
+    })
+    .parse(input)
 }
 
 #[cfg(test)]

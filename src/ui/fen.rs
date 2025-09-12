@@ -1,5 +1,5 @@
 use crate::model::AvailableCastle;
-use crate::model::{Board, Piece, PieceColour, PieceType, Position, MAX_POSITION, MIN_POSITION};
+use crate::model::{Board, MAX_POSITION, MIN_POSITION, Piece, PieceColour, PieceType, Position};
 use crate::ui::UiError;
 
 pub fn from_board(board: &Board) -> Result<String, UiError> {

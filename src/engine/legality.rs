@@ -20,8 +20,7 @@ pub fn check(
 
     !RANGED_PIECES
         .iter()
-        .map(|&piece_type| can_capture_king(king_position, Piece::new(colour, piece_type), &board))
-        .any(|x| x)
+        .any(|&piece_type| can_capture_king(king_position, Piece::new(colour, piece_type), &board))
 }
 
 fn can_capture_king(king_position: Position, piece: Piece, board: &Board) -> bool {

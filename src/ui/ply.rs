@@ -1,19 +1,19 @@
 use std::fmt::Display;
 
 use ratatui::{
+    Frame,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{
-        block::{self, Title},
         Block, Borders, Padding, Paragraph, Wrap,
+        block::{self, Title},
     },
-    Frame,
 };
 
 use crate::model::{
-    Check, GameResult, MoveQualifier, Movement, Piece, PieceColour, PieceType, Ply, PlyMovement,
-    Position, COLUMNS, ROWS,
+    COLUMNS, Check, GameResult, MoveQualifier, Movement, Piece, PieceColour, PieceType, Ply,
+    PlyMovement, Position, ROWS,
 };
 
 const BLACK_PAWN: &str = "P";
@@ -206,15 +206,15 @@ pub fn render(
     frame.render_widget(paragraph, area);
 }
 
-fn standard_ply(ply: &Ply) -> Span {
+fn standard_ply(ply: &Ply) -> Span<'_> {
     Span::styled(format!("{ply}"), Style::default().fg(Color::DarkGray))
 }
 
-fn highlighted_ply(ply: &Ply) -> Span {
+fn highlighted_ply(ply: &Ply) -> Span<'_> {
     Span::styled(format!("{ply}"), Style::default().fg(Color::Yellow))
 }
 
-fn standard_game_result(game_result: &GameResult) -> Span {
+fn standard_game_result(game_result: &GameResult) -> Span<'_> {
     Span::styled(
         format!("{game_result}"),
         Style::default()

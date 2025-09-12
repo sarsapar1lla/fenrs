@@ -1,8 +1,8 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Cell, Clear, Row, Table},
-    Frame,
 };
 
 use crate::model::{GameResult, Tags};

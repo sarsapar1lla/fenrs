@@ -1,4 +1,5 @@
 use crate::model::{PieceColour, Ply};
+use nom::Parser;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::bytes::complete::take_until;
@@ -7,26 +8,27 @@ use nom::combinator::{map, opt};
 use nom::multi::many0;
 use nom::sequence::delimited;
 use nom::{
+    IResult,
     character::complete::{digit1, space0},
     combinator::map_res,
-    sequence::{terminated, tuple},
-    IResult,
+    sequence::terminated,
 };
 
 use super::{ply, result};
 
 pub fn parse(input: &str) -> IResult<&str, Vec<Ply>> {
     let result_only_parser = map(result::parse, |_| Vec::new());
-    alt((result_only_parser, parse_moves))(input)
+    alt((result_only_parser, parse_moves)).parse(input)
 }
 
 fn parse_moves(input: &str) -> IResult<&str, Vec<Ply>> {
     let (remaining, mut first_move) =
-        alt((parse_move, map(parse_partial_move, |ply| vec![ply])))(input)?;
+        alt((parse_move, map(parse_partial_move, |ply| vec![ply]))).parse(input)?;
 
     let (remaining, mut other_moves) = map(many0(parse_move), |list| {
         list.into_iter().flatten().collect()
-    })(remaining)?;
+    })
+    .parse(remaining)?;
     first_move.append(&mut other_moves);
     Ok((remaining, first_move))
 }
@@ -34,9 +36,9 @@ fn parse_moves(input: &str) -> IResult<&str, Vec<Ply>> {
 fn parse_move(input: &str) -> IResult<&str, Vec<Ply>> {
     let (remaining, move_number) = white_move_number(input)?;
     let (remaining, white_ply) = ply::parse(remaining, PieceColour::White)?;
-    let (remaining, white_comment) = opt(comment)(remaining)?;
+    let (remaining, white_comment) = opt(comment).parse(remaining)?;
 
-    let (remaining, maybe_result) = opt(result::parse)(remaining)?;
+    let (remaining, maybe_result) = opt(result::parse).parse(remaining)?;
 
     if maybe_result.is_some() {
         return Ok((
@@ -45,12 +47,12 @@ fn parse_move(input: &str) -> IResult<&str, Vec<Ply>> {
         ));
     }
 
-    let (remaining, maybe_black_move_number) = opt(black_move_number)(remaining)?;
+    let (remaining, maybe_black_move_number) = opt(black_move_number).parse(remaining)?;
 
     let (remaining, black_ply) = ply::parse(remaining, PieceColour::Black)?;
-    let (remaining, black_comment) = opt(comment)(remaining)?;
+    let (remaining, black_comment) = opt(comment).parse(remaining)?;
 
-    let (remaining, _) = opt(result::parse)(remaining)?;
+    let (remaining, _) = opt(result::parse).parse(remaining)?;
 
     Ok((
         remaining,
@@ -69,25 +71,25 @@ fn parse_partial_move(input: &str) -> IResult<&str, Ply> {
     let (remaining, move_number) = black_move_number(input)?;
 
     let (remaining, ply) = ply::parse(remaining, PieceColour::Black)?;
-    let (remaining, comment) = opt(comment)(remaining)?;
+    let (remaining, comment) = opt(comment).parse(remaining)?;
 
-    let (remaining, _) = opt(result::parse)(remaining)?;
+    let (remaining, _) = opt(result::parse).parse(remaining)?;
 
     Ok((remaining, Ply::new(move_number, ply, comment)))
 }
 
 fn white_move_number(input: &str) -> IResult<&str, i16> {
-    let terminator = tuple((char('.'), opt(line_ending), space0));
-    map_res(terminated(digit1, terminator), |s: &str| s.parse::<i16>())(input)
+    let terminator = (char('.'), opt(line_ending), space0);
+    map_res(terminated(digit1, terminator), |s: &str| s.parse::<i16>()).parse(input)
 }
 
 fn black_move_number(input: &str) -> IResult<&str, i16> {
-    let terminator = tuple((tag("..."), opt(line_ending), space0));
-    map_res(terminated(digit1, terminator), |s: &str| s.parse::<i16>())(input)
+    let terminator = (tag("..."), opt(line_ending), space0);
+    map_res(terminated(digit1, terminator), |s: &str| s.parse::<i16>()).parse(input)
 }
 
 fn comment(input: &str) -> IResult<&str, String> {
-    alt((parenthesis_comment, semicolon_comment))(input)
+    alt((parenthesis_comment, semicolon_comment)).parse(input)
 }
 
 fn parenthesis_comment(input: &str) -> IResult<&str, String> {
@@ -95,12 +97,12 @@ fn parenthesis_comment(input: &str) -> IResult<&str, String> {
         delimited(char('{'), take_until("}"), char('}')),
         alt((space1, line_ending)),
     );
-    map(parser, |s: &str| s.replace('\n', " "))(input)
+    map(parser, |s: &str| s.replace('\n', " ")).parse(input)
 }
 
 fn semicolon_comment(input: &str) -> IResult<&str, String> {
     let parser = delimited(char(';'), take_until("\n"), line_ending);
-    map(parser, |s: &str| s.trim().to_string())(input)
+    map(parser, |s: &str| s.trim().to_string()).parse(input)
 }
 
 #[cfg(test)]

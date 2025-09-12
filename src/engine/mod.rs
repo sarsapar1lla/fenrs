@@ -164,7 +164,9 @@ fn qualified_position(
                 .collect();
             match filtered_candidates[..] {
                 [only] => Ok(only),
-                _ => Err(EngineError::new(format!("Cannot uniquely determine piece position from qualifier {qualifier:?}; candidates: {candidates:?}")))
+                _ => Err(EngineError::new(format!(
+                    "Cannot uniquely determine piece position from qualifier {qualifier:?}; candidates: {candidates:?}"
+                ))),
             }
         }
         MoveQualifier::Row(row) => {
@@ -180,7 +182,9 @@ fn qualified_position(
                 .collect();
             match filtered_candidates[..] {
                 [only] => Ok(only),
-                _ => Err(EngineError::new(format!("Cannot uniquely determine piece position from qualifier {qualifier:?}; candidates: {candidates:?}")))
+                _ => Err(EngineError::new(format!(
+                    "Cannot uniquely determine piece position from qualifier {qualifier:?}; candidates: {candidates:?}"
+                ))),
             }
         }
     }
