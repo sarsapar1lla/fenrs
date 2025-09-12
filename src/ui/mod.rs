@@ -5,7 +5,7 @@ use std::io::{self, Stdout};
 
 use crossterm::{
     execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
+    terminal::{EnterAlternateScreen, enable_raw_mode},
 };
 use ratatui::prelude::*;
 

@@ -1,6 +1,6 @@
 use std::{error::Error, fs};
 
-use pigin::{execute_moves, launch, parse, pigin, Game, Pgn};
+use pigin::{Game, Pgn, execute_moves, launch, parse, pigin};
 
 type PgnsResult = Result<Vec<Pgn>, Box<dyn Error>>;
 

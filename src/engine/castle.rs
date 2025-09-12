@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
 use crate::model::{
-    AvailableCastle, Board, Piece, PieceColour, PieceType, Position, MAX_POSITION, MIN_POSITION,
+    AvailableCastle, Board, MAX_POSITION, MIN_POSITION, Piece, PieceColour, PieceType, Position,
 };
 
 use super::{active_colour, clocks, error::EngineError};

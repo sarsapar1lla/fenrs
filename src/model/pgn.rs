@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{board::Board, PieceColour, Ply};
+use super::{PieceColour, Ply, board::Board};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GameResult {
